@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Garde-Robe</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --noir:#0f0d0b;--creme:#f6f1ea;--or:#b8936a;--taupe:#c4b49a;
+  --brun:#5c4a32;--gris:#e8e2d9;--texte:#8a7d6b;--blanc:#fff;
+  --rouge:#c0392b;--vert:#2e7d52;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--creme);color:var(--noir);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+/* HEADER */
+.app-header{background:var(--noir);padding:16px 20px 18px;text-align:center;}
+.app-header h1{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--creme);}
+.app-header h1 em{font-style:italic;color:var(--or);}
+.saison-bar{display:flex;justify-content:center;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.saison-btn{background:transparent;border:1px solid #444;color:var(--taupe);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:5px 11px;cursor:pointer;transition:all 0.2s;}
+.saison-btn.active{background:var(--or);border-color:var(--or);color:var(--blanc);}
+
+/* TABS */
+.tabs{display:flex;background:#1a1714;position:sticky;top:0;z-index:100;}
+.tab{flex:1;padding:12px 4px;background:none;border:none;color:var(--taupe);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.tab.active{color:var(--creme);border-bottom-color:var(--or);}
+
+.screen{display:none;}.screen.active{display:block;}
+
+/* FILTRES */
+.filtres-bar{padding:13px 14px 10px;background:var(--blanc);border-bottom:1px solid var(--gris);}
+.filtres-bar h2{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;margin-bottom:7px;}
+.pills{display:flex;gap:5px;flex-wrap:wrap;}
+.pill{background:var(--gris);border:none;color:var(--brun);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:5px 11px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.pill.active,.pill:hover{background:var(--noir);color:var(--creme);}
+
+.legende-bar{display:flex;gap:14px;padding:7px 14px;background:var(--creme);border-bottom:1px solid var(--gris);}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--texte);font-weight:500;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.dot.ex{background:var(--brun);}.dot.nv{background:var(--or);}
+
+/* TENUE LIST */
+.tenue-list{padding:12px;display:flex;flex-direction:column;gap:14px;}
+.tenue-card{background:var(--blanc);border:1px solid var(--gris);overflow:hidden;display:none;}
+.tenue-card.visible{display:block;}
+
+/* FLAT LAY ZONE — grille de vraies photos */
+.flatlay-zone{background:#f0ece4;padding:14px;position:relative;min-height:160px;}
+.occ-tag{position:absolute;top:8px;left:8px;background:var(--noir);color:var(--creme);font-size:8px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:3px 7px;z-index:2;}
+.saison-tag{position:absolute;top:8px;right:8px;background:var(--or);color:var(--blanc);font-size:8px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:3px 7px;z-index:2;}
+
+/* Grille photos pièces */
+.photos-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px;}
+.photo-slot{position:relative;width:calc(33% - 6px);aspect-ratio:3/4;background:var(--gris);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.photo-slot img{width:100%;height:100%;object-fit:cover;}
+.photo-slot .piece-name{position:absolute;bottom:0;left:0;right:0;background:rgba(15,13,11,0.65);color:var(--creme);font-size:8px;padding:3px 5px;text-align:center;line-height:1.3;}
+.photo-slot.empty{border:1px dashed var(--taupe);cursor:pointer;}
+.photo-slot.empty::before{content:'📷';font-size:20px;opacity:0.4;}
+.photo-slot.empty:hover{border-color:var(--or);}
+.photo-slot.nouveau{border:2px solid var(--or);}
+.photo-slot .dot-overlay{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;}
+
+/* INFOS */
+.tenue-infos{padding:12px 13px;}
+.tenue-nom{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;margin-bottom:8px;}
+.pieces-liste{list-style:none;margin-bottom:10px;}
+.pieces-liste li{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:#444;padding:4px 0;border-bottom:1px solid var(--gris);line-height:1.4;}
+.pieces-liste li:last-child{border-bottom:none;}
+.piece-link{color:var(--or);text-decoration:none;font-size:10px;font-weight:500;letter-spacing:0.05em;white-space:nowrap;margin-left:auto;padding-left:8px;flex-shrink:0;}
+.piece-link:hover{color:var(--brun);}
+.conseil-mini{background:#faf7f2;border-left:2px solid var(--or);padding:7px 9px;font-size:11.5px;font-style:italic;font-family:'Cormorant Garamond',serif;color:var(--brun);line-height:1.5;}
+
+/* BOUTIQUES RAPIDES */
+.boutiques-bar{display:flex;gap:5px;flex-wrap:wrap;padding:10px 13px;border-top:1px solid var(--gris);background:#fafaf8;}
+.boutique-chip{font-size:10px;font-weight:500;padding:4px 10px;border-radius:20px;text-decoration:none;border:1px solid var(--gris);color:var(--texte);white-space:nowrap;}
+.boutique-chip:hover{border-color:var(--or);color:var(--or);}
+
+/* CARD ACTIONS */
+.card-actions{display:flex;border-top:1px solid var(--gris);}
+.card-btn{flex:1;padding:9px;background:none;border:none;border-right:1px solid var(--gris);font-size:11px;font-weight:500;color:var(--texte);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.card-btn:last-child{border-right:none;}
+.card-btn:hover{background:var(--gris);}
+.card-btn.danger:hover{background:#fff0f0;color:var(--rouge);}
+
+/* FAB */
+.fab{position:fixed;bottom:22px;right:18px;z-index:200;width:50px;height:50px;border-radius:50%;background:var(--or);border:none;color:var(--blanc);font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;}
+.fab:hover{background:var(--brun);}
+
+/* ====== MODAL TENUE ====== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--blanc);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:14px 14px 0 0;padding:20px;}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:400;margin-bottom:14px;}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--texte);margin-bottom:4px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--gris);padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--noir);background:var(--blanc);outline:none;}
+.form-group textarea{min-height:60px;resize:vertical;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--or);}
+
+/* Pièces éditables */
+.pieces-editor{display:flex;flex-direction:column;gap:8px;margin-bottom:6px;}
+.piece-edit-row{border:1px solid var(--gris);padding:10px;background:#fafaf8;position:relative;}
+.piece-edit-row .row-top{display:flex;gap:6px;align-items:center;margin-bottom:7px;}
+.piece-edit-row .row-top input{flex:1;font-size:12px;}
+.piece-edit-row .row-top select{width:90px;font-size:12px;flex-shrink:0;}
+.piece-edit-row .row-top button{background:none;border:1px solid var(--gris);width:28px;height:32px;cursor:pointer;font-size:12px;color:var(--texte);flex-shrink:0;}
+.piece-edit-row .row-top button:hover{border-color:var(--rouge);color:var(--rouge);}
+
+/* Upload photo dans modal */
+.photo-upload-zone{border:1.5px dashed var(--taupe);padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all 0.2s;}
+.photo-upload-zone:hover{border-color:var(--or);}
+.photo-upload-zone img.preview{width:48px;height:60px;object-fit:cover;border-radius:2px;flex-shrink:0;}
+.photo-upload-zone .upload-placeholder{width:48px;height:60px;background:var(--gris);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border-radius:2px;}
+.photo-upload-zone .upload-text{font-size:11px;color:var(--texte);}
+.photo-upload-zone .upload-text strong{display:block;color:var(--noir);font-size:12px;margin-bottom:2px;}
+.piece-link-row{display:flex;gap:6px;align-items:center;margin-top:6px;}
+.piece-link-row input{flex:1;font-size:11px;}
+.piece-link-row select{width:90px;font-size:11px;flex-shrink:0;}
+
+.add-piece-btn{background:none;border:1px dashed var(--taupe);width:100%;padding:8px;font-size:11px;color:var(--texte);cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+.add-piece-btn:hover{border-color:var(--or);color:var(--or);}
+
+.modal-actions{display:flex;gap:7px;margin-top:14px;}
+.btn-save{flex:1;background:var(--noir);color:var(--creme);border:none;padding:13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;}
+.btn-save:hover{background:var(--brun);}
+.btn-cancel{background:none;border:1px solid var(--gris);color:var(--texte);padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;}
+
+/* MODAL PHOTO UNIQUE (agrandie) */
+.photo-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.photo-modal.open{display:flex;}
+.photo-modal img{max-width:100%;max-height:85vh;object-fit:contain;border-radius:4px;}
+.photo-modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;}
+
+/* ACHATS */
+.achats-header{padding:15px 18px;background:var(--blanc);border-bottom:1px solid var(--gris);}
+.achats-header h2{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:400;}
+.budget-bar-wrap{margin-top:10px;background:var(--gris);height:4px;border-radius:2px;overflow:hidden;}
+.budget-fill{height:100%;background:var(--or);transition:width 0.5s ease;}
+.budget-info{display:flex;justify-content:space-between;font-size:11px;color:var(--texte);margin-top:4px;}
+.budget-d{font-weight:500;color:var(--or);}
+.achats-section{padding:10px 13px;}
+.sec-titre{font-size:10px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:var(--texte);margin:10px 0 6px;}
+.achat-item{display:flex;align-items:center;gap:10px;background:var(--blanc);border:1px solid var(--gris);padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:all 0.2s;}
+.achat-item.achete{background:#f8f5f0;border-color:#d4c9b8;opacity:0.65;}
+.achat-check{width:21px;height:21px;border:1.5px solid var(--taupe);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--or);flex-shrink:0;}
+.achat-item.achete .achat-check{background:var(--or);border-color:var(--or);color:white;}
+.achat-info{flex:1;}
+.achat-nom{font-size:13px;font-weight:500;}
+.achat-item.achete .achat-nom{text-decoration:line-through;color:var(--texte);}
+.achat-det{font-size:11px;color:var(--texte);margin-top:1px;}
+.achat-liens{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.achat-lien{font-size:10px;padding:2px 8px;border:1px solid var(--gris);color:var(--texte);text-decoration:none;border-radius:10px;}
+.achat-lien:hover{border-color:var(--or);color:var(--or);}
+.achat-prix{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--brun);white-space:nowrap;}
+.achat-item.achete .achat-prix{color:var(--or);}
+.pb{font-size:8px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:2px 6px;background:var(--noir);color:var(--creme);}
+.pb.p2{background:var(--taupe);}
+
+/* LOOKBOOK */
+.lookbook-grid{padding:12px;display:flex;flex-direction:column;gap:10px;}
+.look-card{background:var(--blanc);border:1px solid var(--gris);overflow:hidden;}
+.look-photos{background:#f0ece4;padding:12px;display:flex;gap:6px;overflow-x:auto;min-height:100px;align-items:center;}
+.look-photo{width:70px;height:90px;object-fit:cover;border-radius:3px;flex-shrink:0;}
+.look-photo-empty{width:70px;height:90px;background:var(--gris);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;opacity:0.5;}
+.look-body{padding:11px 13px;}
+.look-titre{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:400;margin-bottom:3px;}
+.look-occ{font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--or);margin-bottom:6px;}
+.look-pieces{list-style:none;font-size:12px;color:#555;line-height:1.8;}
+.look-pieces li::before{content:"— ";color:var(--taupe);}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:40px 20px;color:var(--texte);}
+.empty-state p{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;margin-bottom:8px;}
+.empty-state small{font-size:12px;}
+
+/* ASTUCE PHOTO */
+.astuce-photo{background:linear-gradient(135deg,#faf7f2,#f0ece4);border:1px solid var(--taupe);padding:12px 14px;margin:12px;border-left:3px solid var(--or);}
+.astuce-photo p{font-size:12px;color:var(--brun);line-height:1.6;}
+.astuce-photo strong{font-family:'Cormorant Garamond',serif;font-size:14px;display:block;margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Ma garde-robe <em>élégante</em></h1>
+  <div class="saison-bar">
+    <button class="saison-btn active" onclick="setSaison('Été',this)">☀ Été</button>
+    <button class="saison-btn" onclick="setSaison('Automne',this)">🍂 Automne</button>
+    <button class="saison-btn" onclick="setSaison('Hiver',this)">❄ Hiver</button>
+    <button class="saison-btn" onclick="setSaison('Printemps',this)">🌸 Printemps</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showScreen('matin',this)">☀ Ce matin</button>
+  <button class="tab" onclick="showScreen('lookbook',this)">✦ Lookbook</button>
+  <button class="tab" onclick="showScreen('achats',this)">◎ Achats</button>
+</div>
+
+<!-- CE MATIN -->
+<div id="screen-matin" class="screen active">
+  <div class="filtres-bar">
+    <h2 id="matin-titre">Tenues Été</h2>
+    <div class="pills">
+      <button class="pill active" onclick="filtrer('tout',this)">Toutes</button>
+      <button class="pill" onclick="filtrer('bureau',this)">Bureau</button>
+      <button class="pill" onclick="filtrer('sortie',this)">Soirée</button>
+      <button class="pill" onclick="filtrer('quotidien',this)">Quotidien</button>
+      <button class="pill" onclick="filtrer('weekend',this)">Week-end</button>
+    </div>
+  </div>
+  <div class="legende-bar">
+    <span class="leg"><span class="dot ex"></span>Déjà dans ta garde-robe</span>
+    <span class="leg"><span class="dot nv"></span>À acquérir</span>
+  </div>
+
+  <div class="astuce-photo" id="astuce-banner">
+    <strong>📷 Comment ajouter tes vraies photos</strong>
+    Pose chaque vêtement à plat sur ton lit, prends une photo, puis modifie la tenue et ajoute la photo de chaque pièce. L'app compose le flat lay automatiquement !
+    <br><span style="font-size:11px;color:var(--or);cursor:pointer;font-weight:500;" onclick="document.getElementById('astuce-banner').style.display='none'">✕ Fermer</span>
+  </div>
+
+  <div class="tenue-list" id="tenue-list"></div>
+  <div style="height:80px;"></div>
+</div>
+
+<!-- LOOKBOOK -->
+<div id="screen-lookbook" class="screen">
+  <div style="padding:13px 15px;background:var(--blanc);border-bottom:1px solid var(--gris);">
+    <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;">Toutes mes tenues</p>
+    <p style="font-size:11px;color:var(--texte);margin-top:2px;" id="lookbook-count"></p>
+  </div>
+  <div class="lookbook-grid" id="lookbook-grid"></div>
+  <div style="height:80px;"></div>
+</div>
+
+<!-- ACHATS -->
+<div id="screen-achats" class="screen">
+  <div class="achats-header">
+    <h2>Liste d'achats</h2>
+    <div class="budget-bar-wrap"><div class="budget-fill" id="budget-fill" style="width:0%"></div></div>
+    <div class="budget-info"><span id="budget-ach">0 pièce achetée</span><span class="budget-d" id="budget-tot">0€ / ~215€</span></div>
+  </div>
+  <div class="achats-section">
+    <p class="sec-titre">🥇 Priorité 1</p>
+    <div class="achat-item" onclick="toggleAchat(this,20)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Body / top crème col V</div>
+        <div class="achat-det">Se rentre dans tous les bas</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://www2.hm.com/fr_fr/femme/catalogue-par-produit/tops.html?necklineStyles=Encolure+en+V" target="_blank">H&M</a>
+          <a class="achat-lien" href="https://www.kiabi.com/recherche?q=body+col+v+femme" target="_blank">Kiabi</a>
+          <a class="achat-lien" href="https://www.zalando.fr/femme-hauts-debardeurs/?q=body+col+v" target="_blank">Zalando</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb">P1</span><span class="achat-prix">~20€</span></div>
+    </div>
+
+    <div class="achat-item" onclick="toggleAchat(this,35)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Sandales slingback kitten heel</div>
+        <div class="achat-det">Camel ou noir · Été & soirée</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://shop.mango.com/fr/fr/p/femme/chaussure/sandales/sandales-talon-kitten-heel_17091125" target="_blank">Mango</a>
+          <a class="achat-lien" href="https://www.zara.com/fr/fr/woman-shoes-heeled-mules-l4171.html" target="_blank">Zara</a>
+          <a class="achat-lien" href="https://www.asos.com/fr/femme/chaussures/sandales/cat/?q=slingback+kitten+heel" target="_blank">ASOS</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb">P1</span><span class="achat-prix">~35€</span></div>
+    </div>
+
+    <div class="achat-item" onclick="toggleAchat(this,45)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Blazer oversize camel ou noir</div>
+        <div class="achat-det">La pièce qui transforme tout</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://shop.mango.com/fr/fr/c/femme/blazer/oversize_429721d2" target="_blank">Mango</a>
+          <a class="achat-lien" href="https://www.zara.com/fr/fr/woman-blazers-l1055.html" target="_blank">Zara</a>
+          <a class="achat-lien" href="https://www.zalando.fr/femme-vetements-vestes-blazers/?q=blazer+oversize" target="_blank">Zalando</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb">P1</span><span class="achat-prix">~45€</span></div>
+    </div>
+
+    <p class="sec-titre">🥈 Priorité 2</p>
+    <div class="achat-item" onclick="toggleAchat(this,20)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Top satin col V coloré</div>
+        <div class="achat-det">Bordeaux, nuit ou terracotta</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://www2.hm.com/fr_fr/femme/catalogue-par-produit/chemisiers-et-blouses/blouses.html?materials=Satin" target="_blank">H&M</a>
+          <a class="achat-lien" href="https://www.asos.com/fr/femme/hauts/cat/?q=top+satin+col+v" target="_blank">ASOS</a>
+          <a class="achat-lien" href="https://www.zalando.fr/femme-hauts/?q=top+satin" target="_blank">Zalando</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb p2">P2</span><span class="achat-prix">~20€</span></div>
+    </div>
+
+    <div class="achat-item" onclick="toggleAchat(this,25)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Chemise blanche oversize</div>
+        <div class="achat-det">Bureau et week-end</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://www2.hm.com/fr_fr/femme/catalogue-par-produit/chemisiers-et-blouses.html" target="_blank">H&M</a>
+          <a class="achat-lien" href="https://www.zara.com/fr/fr/woman-shirts-l1217.html" target="_blank">Zara</a>
+          <a class="achat-lien" href="https://www.kiabi.com/recherche?q=chemise+blanche+femme" target="_blank">Kiabi</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb p2">P2</span><span class="achat-prix">~25€</span></div>
+    </div>
+
+    <div class="achat-item" onclick="toggleAchat(this,25)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Ballerines bout pointu noires</div>
+        <div class="achat-det">Allongent la silhouette</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://www2.hm.com/fr_fr/femme/chaussures/ballerines.html" target="_blank">H&M</a>
+          <a class="achat-lien" href="https://www.zara.com/fr/fr/woman-shoes-flats-l1252.html" target="_blank">Zara</a>
+          <a class="achat-lien" href="https://www.zalando.fr/femme-chaussures-ballerines/?q=bout+pointu" target="_blank">Zalando</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb p2">P2</span><span class="achat-prix">~25€</span></div>
+    </div>
+
+    <div class="achat-item" onclick="toggleAchat(this,30)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info">
+        <div class="achat-nom">Cardigan long neutre</div>
+        <div class="achat-det">Beige ou gris · Automne/hiver</div>
+        <div class="achat-liens">
+          <a class="achat-lien" href="https://www2.hm.com/fr_fr/femme/catalogue-par-produit/pulls-et-cardigans/cardigans.html" target="_blank">H&M</a>
+          <a class="achat-lien" href="https://shop.mango.com/fr/fr/c/femme/pulls-et-cardigans/cardigans" target="_blank">Mango</a>
+          <a class="achat-lien" href="https://www.kiabi.com/recherche?q=cardigan+long+femme" target="_blank">Kiabi</a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb p2">P2</span><span class="achat-prix">~30€</span></div>
+    </div>
+
+    <p class="sec-titre">🔧 À faire</p>
+    <div class="achat-item" onclick="toggleAchat(this,12)">
+      <div class="achat-check">✓</div>
+      <div class="achat-info"><div class="achat-nom">Retouche pantalons à pinces</div><div class="achat-det">Retoucheuse locale · ~12€/pièce</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><span class="pb" style="background:var(--taupe);">Action</span><span class="achat-prix">~12€</span></div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+</div>
+
+<button class="fab" id="fab-btn" onclick="ouvrirModal()" title="Ajouter une tenue">+</button>
+
+<!-- MODAL TENUE -->
+<div class="modal-overlay" id="modal-overlay" onclick="fermerModalOverlay(event)">
+  <div class="modal" onclick="e=>e.stopPropagation()">
+    <h3 id="modal-titre">Nouvelle tenue</h3>
+    <div class="form-group"><label>Nom de la tenue</label><input type="text" id="f-nom" placeholder="Ex : Le look estival..."></div>
+    <div class="form-group"><label>Occasion</label>
+      <select id="f-occasion">
+        <option value="quotidien">Quotidien</option>
+        <option value="bureau">Bureau</option>
+        <option value="sortie">Soirée</option>
+        <option value="weekend">Week-end</option>
+        <option value="bureau quotidien">Bureau & Quotidien</option>
+        <option value="sortie weekend">Soirée & Week-end</option>
+        <option value="quotidien weekend">Quotidien & Week-end</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Saison</label>
+      <select id="f-saison">
+        <option value="Été">Été</option>
+        <option value="Automne">Automne</option>
+        <option value="Hiver">Hiver</option>
+        <option value="Printemps">Printemps</option>
+        <option value="toutes">Toutes saisons</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Pièces + photos</label>
+      <div class="pieces-editor" id="pieces-editor"></div>
+      <button class="add-piece-btn" onclick="ajouterPieceForm()">+ Ajouter une pièce</button>
+    </div>
+    <div class="form-group"><label>Conseil style</label><textarea id="f-conseil" placeholder="Ex : Blazer toujours ouvert..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fermerModal()">Annuler</button>
+      <button class="btn-save" onclick="sauvegarderTenue()">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PHOTO AGRANDIE -->
+<div class="photo-modal" id="photo-modal" onclick="fermerPhotoModal()">
+  <button class="photo-modal-close" onclick="fermerPhotoModal()">✕</button>
+  <img id="photo-modal-img" src="" alt="">
+</div>
+
+<script>
+// ==========================
+// BOUTIQUES LIENS PAR CATÉGORIE
+// ==========================
+const BOUTIQUES = {
+  haut: [
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/tops.html'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-tops-l1198.html'},
+    {nom:'Mango', url:'https://shop.mango.com/fr/fr/c/femme/hauts'},
+    {nom:'ASOS', url:'https://www.asos.com/fr/femme/hauts/cat/'},
+    {nom:'Kiabi', url:'https://www.kiabi.com/femme/hauts/'},
+  ],
+  bas: [
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/pantalons.html'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-trousers-l1335.html'},
+    {nom:'Mango', url:'https://shop.mango.com/fr/fr/c/femme/pantalons'},
+    {nom:'Zalando', url:'https://www.zalando.fr/femme-vetements-pantalons/'},
+    {nom:'Kiabi', url:'https://www.kiabi.com/femme/pantalons-et-jeans/'},
+  ],
+  robe: [
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/robes.html'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-dresses-l1066.html'},
+    {nom:'ASOS', url:'https://www.asos.com/fr/femme/robes/cat/'},
+    {nom:'Kiabi', url:'https://www.kiabi.com/femme/robes/'},
+  ],
+  jupe: [
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/jupes.html'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-skirts-l1299.html'},
+    {nom:'Mango', url:'https://shop.mango.com/fr/fr/c/femme/jupes'},
+    {nom:'ASOS', url:'https://www.asos.com/fr/femme/jupes/cat/'},
+  ],
+  veste: [
+    {nom:'Mango', url:'https://shop.mango.com/fr/fr/c/femme/blazer/oversize_429721d2'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-blazers-l1055.html'},
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/vestes-et-manteaux.html'},
+    {nom:'Zalando', url:'https://www.zalando.fr/femme-vetements-vestes-blazers/'},
+  ],
+  chaussures: [
+    {nom:'Mango', url:'https://shop.mango.com/fr/fr/c/femme/chaussure'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-shoes-l1251.html'},
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/chaussures.html'},
+    {nom:'ASOS', url:'https://www.asos.com/fr/femme/chaussures/cat/'},
+    {nom:'Kiabi', url:'https://www.kiabi.com/femme/chaussures/'},
+    {nom:'Zalando', url:'https://www.zalando.fr/femme-chaussures/'},
+  ],
+  accessoire: [
+    {nom:'H&M', url:'https://www2.hm.com/fr_fr/femme/accessoires.html'},
+    {nom:'Zara', url:'https://www.zara.com/fr/fr/woman-accessories-l1024.html'},
+    {nom:'Mango', url:'https://shop.mango.com/fr/fr/c/femme/accessoires'},
+  ],
+};
+
+// ==========================
+// DONNÉES INITIALES
+// ==========================
+const TENUES_INIT = [
+  {id:1, nom:'Le Classique Parisien', occasion:'bureau quotidien', saison:'toutes', conseil:'Blazer toujours ouvert — la ligne verticale affine la silhouette.',
+   pieces:[
+    {label:'Jean large noir 7/8', type:'ex', cat:'bas', photo:null, lien:''},
+    {label:'Body crème col V — H&M ~15€', type:'nv', cat:'haut', photo:null, lien:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/tops.html?necklineStyles=Encolure+en+V'},
+    {label:'Blazer oversize camel — Mango ~45€', type:'nv', cat:'veste', photo:null, lien:'https://shop.mango.com/fr/fr/c/femme/blazer/oversize_429721d2'},
+    {label:'Sandales slingback taupe — Mango ~35€', type:'nv', cat:'chaussures', photo:null, lien:'https://shop.mango.com/fr/fr/p/femme/chaussure/sandales/sandales-talon-kitten-heel_17091125'},
+   ]},
+  {id:2, nom:'La Nuit Élégante', occasion:'sortie', saison:'Été', conseil:'Accessoires minimalistes — la fente et le satin font tout le travail.',
+   pieces:[
+    {label:'Jupe noire moulante à fente', type:'ex', cat:'jupe', photo:null, lien:''},
+    {label:'Top satin col V nuit — H&M ~20€', type:'nv', cat:'haut', photo:null, lien:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/chemisiers-et-blouses/blouses.html?materials=Satin'},
+    {label:'Sandales slingback dorées — Mango ~35€', type:'nv', cat:'chaussures', photo:null, lien:'https://shop.mango.com/fr/fr/p/femme/chaussure/sandales/sandales-talon-kitten-heel_17091125'},
+   ]},
+  {id:3, nom:'Le Week-end Chic', occasion:'quotidien weekend', saison:'toutes', conseil:'La blouse juste nouée crée une taille visuelle sans serrer le ventre.',
+   pieces:[
+    {label:'Jean large bleu 7/8', type:'ex', cat:'bas', photo:null, lien:''},
+    {label:'Blouse satin fluide nouée — H&M ~25€', type:'nv', cat:'haut', photo:null, lien:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/chemisiers-et-blouses.html'},
+    {label:'Sneakers cuir blanc épurées — H&M ~35€', type:'nv', cat:'chaussures', photo:null, lien:'https://www2.hm.com/fr_fr/femme/chaussures/baskets.html'},
+   ]},
+  {id:4, nom:'Le Power Look', occasion:'bureau', saison:'toutes', conseil:'Retouche taille du pantalon ~12€ — cette pièce mérite ça.',
+   pieces:[
+    {label:'Pantalon à pinces beige (après retouche)', type:'ex', cat:'bas', photo:null, lien:''},
+    {label:'Chemise blanche oversize — Zara ~25€', type:'nv', cat:'haut', photo:null, lien:'https://www.zara.com/fr/fr/woman-shirts-l1217.html'},
+    {label:'Blazer noir oversize — Mango ~45€', type:'nv', cat:'veste', photo:null, lien:'https://shop.mango.com/fr/fr/c/femme/blazer/oversize_429721d2'},
+    {label:'Ballerines bout pointu noires — H&M ~25€', type:'nv', cat:'chaussures', photo:null, lien:'https://www2.hm.com/fr_fr/femme/chaussures/ballerines.html'},
+   ]},
+  {id:5, nom:'La Robe Polo Réinventée', occasion:'quotidien sortie weekend', saison:'toutes', conseil:'Le collant opaque transforme la robe courte en tenue toutes saisons.',
+   pieces:[
+    {label:'Robe polo courte', type:'ex', cat:'robe', photo:null, lien:''},
+    {label:'Collant opaque 80D noir — Primark ~8€', type:'nv', cat:'accessoire', photo:null, lien:''},
+    {label:'Sandales slingback camel — Mango ~35€', type:'nv', cat:'chaussures', photo:null, lien:'https://shop.mango.com/fr/fr/c/femme/chaussure/sandales'},
+   ]},
+  {id:6, nom:"L'Éditoriale Urbaine", occasion:'sortie weekend', saison:'Automne', conseil:'Cardigan ouvert = ligne verticale. Ne le ferme jamais sur cette tenue.',
+   pieces:[
+    {label:'Jupe effet cuir à fente', type:'ex', cat:'jupe', photo:null, lien:''},
+    {label:'Top satin bordeaux rentré — H&M ~20€', type:'nv', cat:'haut', photo:null, lien:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/chemisiers-et-blouses/blouses.html?materials=Satin'},
+    {label:'Cardigan long beige ouvert — H&M ~30€', type:'nv', cat:'veste', photo:null, lien:'https://www2.hm.com/fr_fr/femme/catalogue-par-produit/pulls-et-cardigans/cardigans.html'},
+    {label:'Mocassins plateforme noirs — Zara ~35€', type:'nv', cat:'chaussures', photo:null, lien:'https://www.zara.com/fr/fr/woman-shoes-flats-l1252.html'},
+   ]},
+];
+
+// ==========================
+// STATE
+// ==========================
+let saisonActive='Été', filtreActif='tout', tenues=[], editId=null;
+let totalDepense=0, achetsCount=0;
+// Photos temporaires en mémoire (base64) par tenue+pieceIndex
+let photosMemoire = {};
+
+function init() {
+  const saved = localStorage.getItem('garderobe_v3');
+  tenues = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(TENUES_INIT));
+  const photosSaved = localStorage.getItem('garderobe_photos_v3');
+  if(photosSaved) photosMemoire = JSON.parse(photosSaved);
+  render();
+}
+function sauvegarder() {
+  localStorage.setItem('garderobe_v3', JSON.stringify(tenues));
+  // On ne sauvegarde pas les photos en localStorage (trop lourd) — elles restent en mémoire session
+}
+function sauvegarderPhotos() {
+  try { localStorage.setItem('garderobe_photos_v3', JSON.stringify(photosMemoire)); } catch(e) {}
+}
+
+// ==========================
+// RENDER
+// ==========================
+function render() { renderTenues(); renderLookbook(); }
+
+function getPhoto(id, idx) {
+  return photosMemoire[`${id}_${idx}`] || null;
+}
+
+function renderTenues() {
+  const container = document.getElementById('tenue-list');
+  document.getElementById('matin-titre').textContent = 'Tenues ' + saisonActive;
+  const filtered = tenues.filter(t => t.saison===saisonActive || t.saison==='toutes');
+  if(!filtered.length) {
+    container.innerHTML=`<div class="empty-state"><p>Aucune tenue pour cette saison</p><small>Appuie sur + pour en ajouter</small></div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(t => {
+    const cats = t.occasion||'';
+    const visible = filtreActif==='tout' || cats.includes(filtreActif);
+    const occ = t.occasion.split(' ')[0];
+
+    // Photos grid — max 4 pièces affichées
+    const photosHTML = t.pieces.slice(0,4).map((p,i) => {
+      const photo = getPhoto(t.id, i);
+      const isNv = p.type==='nv';
+      if(photo) {
+        return `<div class="photo-slot ${isNv?'nouveau':''}" onclick="voirPhoto('${photo}')">
+          <img src="${photo}" alt="${p.label}">
+          <span class="dot-overlay" style="background:${isNv?'#b8936a':'#5c4a32'};"></span>
+          <span class="piece-name">${p.label.split('—')[0].trim()}</span>
+        </div>`;
+      } else {
+        return `<div class="photo-slot empty ${isNv?'nouveau':''}" onclick="uploadPhotoDirecte(${t.id},${i})" title="Ajouter la photo de cette pièce">
+          <span class="piece-name" style="position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:8px;color:var(--texte);padding:0 3px;">${p.label.split('—')[0].trim()}</span>
+        </div>`;
+      }
+    }).join('');
+
+    // Pièces liste avec lien boutique
+    const piecesHTML = t.pieces.map(p => {
+      const lienHTML = p.lien
+        ? `<a class="piece-link" href="${p.lien}" target="_blank">→ Voir</a>`
+        : (BOUTIQUES[p.cat] ? `<a class="piece-link" href="${BOUTIQUES[p.cat][0].url}" target="_blank">→ Chercher</a>` : '');
+      return `<li>
+        <span class="dot" style="background:${p.type==='ex'?'var(--brun)':'var(--or)'};width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0;display:inline-block;"></span>
+        <span style="flex:1;">${p.label}</span>
+        ${lienHTML}
+      </li>`;
+    }).join('');
+
+    // Boutiques rapides selon catégories des pièces
+    const cats_pieces = [...new Set(t.pieces.filter(p=>p.type==='nv').map(p=>p.cat))];
+    const boutiquesHTML = cats_pieces.length
+      ? `<div class="boutiques-bar">
+          ${['H&M','Zara','Mango','Zalando','ASOS','Kiabi'].map(b => {
+            const urls = {
+              'H&M':'https://www2.hm.com/fr_fr/femme.html',
+              'Zara':'https://www.zara.com/fr/fr/woman-l1002.html',
+              'Mango':'https://shop.mango.com/fr/fr/c/femme',
+              'Zalando':'https://www.zalando.fr/femme/',
+              'ASOS':'https://www.asos.com/fr/femme/',
+              'Kiabi':'https://www.kiabi.com/femme/',
+            };
+            return `<a class="boutique-chip" href="${urls[b]}" target="_blank">${b}</a>`;
+          }).join('')}
+        </div>` : '';
+
+    const conseilHTML = t.conseil ? `<div class="conseil-mini">${t.conseil}</div>` : '';
+
+    return `<div class="tenue-card ${visible?'visible':''}" data-id="${t.id}" data-cat="${t.occasion}">
+      <div class="flatlay-zone">
+        <span class="occ-tag">${occ}</span>
+        <span class="saison-tag">${t.saison==='toutes'?'✦':t.saison}</span>
+        <div class="photos-grid">${photosHTML}</div>
+      </div>
+      <div class="tenue-infos">
+        <h3 class="tenue-nom">${t.nom}</h3>
+        <ul class="pieces-liste">${piecesHTML}</ul>
+        ${conseilHTML}
+      </div>
+      ${boutiquesHTML}
+      <div class="card-actions">
+        <button class="card-btn" onclick="editerTenue(${t.id})">✎ Modifier</button>
+        <button class="card-btn danger" onclick="supprimerTenue(${t.id})">✕ Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderLookbook() {
+  const grid = document.getElementById('lookbook-grid');
+  document.getElementById('lookbook-count').textContent = tenues.length+' tenue'+(tenues.length>1?'s':'')+' · toutes saisons';
+  grid.innerHTML = tenues.map(t => {
+    const photosHTML = t.pieces.slice(0,5).map((p,i) => {
+      const photo = getPhoto(t.id,i);
+      return photo
+        ? `<img class="look-photo" src="${photo}" alt="${p.label}" onclick="voirPhoto('${photo}')" style="cursor:pointer;">`
+        : `<div class="look-photo-empty">📷</div>`;
+    }).join('');
+    const piecesHTML = t.pieces.map(p=>`<li>${p.label}</li>`).join('');
+    return `<div class="look-card">
+      <div class="look-photos">${photosHTML}</div>
+      <div class="look-body">
+        <div class="look-occ">${t.occasion.replace(' ',' · ')} · ${t.saison==='toutes'?'Toutes saisons':t.saison}</div>
+        <p class="look-titre">${t.nom}</p>
+        <ul class="look-pieces">${piecesHTML}</ul>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ==========================
+// UPLOAD PHOTO DIRECTE (depuis carte)
+// ==========================
+function uploadPhotoDirecte(tenueId, pieceIdx) {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const key = `${tenueId}_${pieceIdx}`;
+      photosMemoire[key] = ev.target.result;
+      sauvegarderPhotos();
+      render();
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+// ==========================
+// PHOTO AGRANDIE
+// ==========================
+function voirPhoto(src) {
+  document.getElementById('photo-modal-img').src = src;
+  document.getElementById('photo-modal').classList.add('open');
+}
+function fermerPhotoModal() {
+  document.getElementById('photo-modal').classList.remove('open');
+}
+
+// ==========================
+// NAV
+// ==========================
+function setSaison(s,btn) {
+  saisonActive=s;
+  document.querySelectorAll('.saison-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderTenues();
+}
+function filtrer(cat,btn) {
+  filtreActif=cat;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tenue-card').forEach(card=>{
+    const c=card.dataset.cat||'';
+    if(cat==='tout'||c.includes(cat)) card.classList.add('visible');
+    else card.classList.remove('visible');
+  });
+}
+function showScreen(name,btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('fab-btn').style.display=(name==='matin')?'flex':'none';
+}
+
+// ==========================
+// MODAL TENUE
+// ==========================
+let piecePhotosTemp = {}; // photos dans le formulaire avant sauvegarde
+
+function ouvrirModal(tenue=null) {
+  editId = tenue ? tenue.id : null;
+  piecePhotosTemp = {};
+  document.getElementById('modal-titre').textContent = tenue ? 'Modifier la tenue' : 'Nouvelle tenue';
+  document.getElementById('f-nom').value = tenue ? tenue.nom : '';
+  document.getElementById('f-occasion').value = tenue ? tenue.occasion : 'quotidien';
+  document.getElementById('f-saison').value = tenue ? tenue.saison : saisonActive;
+  document.getElementById('f-conseil').value = tenue ? (tenue.conseil||'') : '';
+  const editor = document.getElementById('pieces-editor');
+  editor.innerHTML = '';
+  const pieces = tenue ? tenue.pieces : [{label:'',type:'ex',cat:'haut',photo:null,lien:''}];
+  pieces.forEach((p,i) => {
+    const existingPhoto = tenue ? getPhoto(tenue.id, i) : null;
+    ajouterPieceForm(p, i, existingPhoto);
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function fermerModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function fermerModalOverlay(e){if(e.target===document.getElementById('modal-overlay'))fermerModal();}
+
+function ajouterPieceForm(p={label:'',type:'ex',cat:'haut',lien:''}, idx=null, existingPhoto=null) {
+  const editor = document.getElementById('pieces-editor');
+  const rowIdx = idx !== null ? idx : editor.children.length;
+  const row = document.createElement('div');
+  row.className = 'piece-edit-row';
+  row.dataset.idx = rowIdx;
+
+  const photoSrc = piecePhotosTemp[rowIdx] || existingPhoto || '';
+  const photoHTML = photoSrc
+    ? `<img class="preview" src="${photoSrc}" alt="">`
+    : `<div class="upload-placeholder">📷</div>`;
+
+  row.innerHTML = `
+    <div class="row-top">
+      <input type="text" placeholder="Nom de la pièce..." value="${p.label||''}">
+      <select class="piece-type">
+        <option value="ex" ${p.type==='ex'?'selected':''}>✓ Existant</option>
+        <option value="nv" ${p.type==='nv'?'selected':''}>+ À acheter</option>
+      </select>
+      <button onclick="this.closest('.piece-edit-row').remove()">✕</button>
+    </div>
+    <div class="photo-upload-zone" onclick="uploadPieceModal(this,${rowIdx})">
+      ${photoHTML}
+      <div class="upload-text">
+        <strong>${photoSrc ? 'Photo ajoutée ✓' : 'Ajouter une photo'}</strong>
+        ${photoSrc ? 'Appuie pour changer' : 'Pose le vêtement à plat et prends une photo'}
+      </div>
+    </div>
+    <div class="piece-link-row">
+      <select class="piece-cat">
+        <option value="haut" ${p.cat==='haut'?'selected':''}>Haut / Top</option>
+        <option value="bas" ${p.cat==='bas'?'selected':''}>Jean / Pantalon</option>
+        <option value="jupe" ${p.cat==='jupe'?'selected':''}>Jupe</option>
+        <option value="robe" ${p.cat==='robe'?'selected':''}>Robe</option>
+        <option value="veste" ${p.cat==='veste'?'selected':''}>Blazer / Veste</option>
+        <option value="chaussures" ${p.cat==='chaussures'?'selected':''}>Chaussures</option>
+        <option value="accessoire" ${p.cat==='accessoire'?'selected':''}>Accessoire</option>
+      </select>
+      <input type="url" placeholder="Lien boutique (optionnel)" value="${p.lien||''}">
+    </div>`;
+  editor.appendChild(row);
+}
+
+function uploadPieceModal(zone, idx) {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='image/*';
+  input.onchange = e => {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      piecePhotosTemp[idx] = ev.target.result;
+      // Mettre à jour l'aperçu
+      const img = zone.querySelector('img.preview') || zone.querySelector('.upload-placeholder');
+      if(img) {
+        const newImg = document.createElement('img');
+        newImg.className='preview'; newImg.src=ev.target.result;
+        img.replaceWith(newImg);
+      }
+      zone.querySelector('.upload-text strong').textContent = 'Photo ajoutée ✓';
+      zone.querySelector('.upload-text').lastChild.textContent = 'Appuie pour changer';
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function sauvegarderTenue() {
+  const nom = document.getElementById('f-nom').value.trim();
+  if(!nom){alert('Donne un nom à ta tenue !');return;}
+  const rows = document.querySelectorAll('#pieces-editor .piece-edit-row');
+  const pieces = [];
+  rows.forEach((row,i) => {
+    const label = row.querySelector('input[type=text]').value.trim();
+    if(!label) return;
+    const type = row.querySelector('.piece-type').value;
+    const cat = row.querySelector('.piece-cat').value;
+    const lien = row.querySelector('input[type=url]').value.trim();
+    pieces.push({label,type,cat,photo:null,lien});
+  });
+
+  const newId = editId || Date.now();
+  const tenue = {
+    id:newId, nom,
+    occasion:document.getElementById('f-occasion').value,
+    saison:document.getElementById('f-saison').value,
+    conseil:document.getElementById('f-conseil').value.trim(),
+    pieces,
+  };
+
+  // Transférer les photos temporaires vers photosMemoire
+  Object.keys(piecePhotosTemp).forEach(idx => {
+    photosMemoire[`${newId}_${idx}`] = piecePhotosTemp[idx];
+  });
+  sauvegarderPhotos();
+
+  if(editId){
+    const i = tenues.findIndex(t=>t.id===editId);
+    if(i>=0) tenues[i]=tenue;
+  } else {
+    tenues.push(tenue);
+  }
+  sauvegarder(); render(); fermerModal();
+}
+function editerTenue(id){const t=tenues.find(t=>t.id===id);if(t)ouvrirModal(t);}
+function supprimerTenue(id){
+  if(!confirm('Supprimer cette tenue ?'))return;
+  tenues=tenues.filter(t=>t.id!==id);
+  // Supprimer photos
+  Object.keys(photosMemoire).filter(k=>k.startsWith(id+'_')).forEach(k=>delete photosMemoire[k]);
+  sauvegarder(); sauvegarderPhotos(); render();
+}
+
+// ==========================
+// ACHATS
+// ==========================
+const BUDGET_TOTAL=215;
+function toggleAchat(el,prix){
+  el.classList.toggle('achete');
+  const on=el.classList.contains('achete');
+  totalDepense+=on?prix:-prix; achetsCount+=on?1:-1;
+  const pct=Math.min(100,Math.round(totalDepense/BUDGET_TOTAL*100));
+  document.getElementById('budget-fill').style.width=pct+'%';
+  document.getElementById('budget-tot').textContent=totalDepense+'€ / ~'+BUDGET_TOTAL+'€';
+  document.getElementById('budget-ach').textContent=achetsCount+(achetsCount<=1?' pièce achetée':' pièces achetées');
+}
+
+init();
+</script>
+</body>
+</html>
